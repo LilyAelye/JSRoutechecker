@@ -11,7 +11,8 @@
 */
 function Emulate(params) {
     let f = 0, s = 0, t = 0, pt = 0;
-    let failed_routes = [] // [ {route, code text} ]
+    let failed_routes = []; // [ {route, code text} ]
+    let partial_routes = []; // [ {route} ]
     let results = [];
     let routes = [];
 
@@ -39,7 +40,7 @@ function Emulate(params) {
                 if (typeof params.filterby === "string" && !route.includes(params.filterby)) return;
             }
             results.push(`Route: ${route} | S: ${resp.status} | ST: ${resp.statusText}`);
-            if (resp.status === 200) s++; else if (resp.status === 206) pt++;  else f++, failed_routes.push({r:route, status_t:resp.statusText});
+            if (resp.status === 200) s++; else if (resp.status === 206) pt++, partial_routes.push({r:route});  else f++, failed_routes.push({r:route, status_t:resp.statusText});
             t++;
         })
         .catch(err => {
@@ -71,6 +72,10 @@ function Emulate(params) {
                 makelabel({text: "[Failed] "+route + " | "+ statustext})
             });
             makelabel({text:"Partial Response (206): "+String(pt)})
+            partial_routes.forEach(froute => {
+                var route = froute.r
+                makelabel({text: "[Partial : 206] : "+route})
+            })
         }
         return data;
     });
