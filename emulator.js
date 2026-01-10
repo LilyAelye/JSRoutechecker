@@ -10,7 +10,9 @@
  *  
 */
 function Emulate(params) {
-    let f = 0, s = 0, t = 0;
+    let f = 0, s = 0, t = 0, pt = 0;
+    let failed_routes = []; // [ {route, code text} ]
+    let partial_routes = []; // [ {route} ]
     let results = [];
     let routes = [];
 
@@ -38,7 +40,7 @@ function Emulate(params) {
                 if (typeof params.filterby === "string" && !route.includes(params.filterby)) return;
             }
             results.push(`Route: ${route} | S: ${resp.status} | ST: ${resp.statusText}`);
-            if (resp.status === 200) s++; else f++;
+            if (resp.status === 200) s++; else if (resp.status === 206) pt++, partial_routes.push({r:route});  else f++, failed_routes.push({r:route, status_t:resp.statusText});
             t++;
         })
         .catch(err => {
@@ -54,6 +56,27 @@ function Emulate(params) {
         append_data({label:"✘", result:f});
         append_data({label:"◇", result:routes.length});
         console.warn(data);
+        if (params.location) {
+            var makelabel = function(prams) {
+                var nw_htl = document.createElement("h5")
+                nw_htl.innerText = prams.text
+                params.location.appendChild(nw_htl)
+                return nw_htl
+            }
+            console.log(s, f)
+            makelabel({text:"Success: "+String(s)})
+            makelabel({text:"Failed: "+String(f)})
+            failed_routes.forEach(froute => {
+                var route = froute.r
+                var statustext = froute.status_t
+                makelabel({text: "[Failed] "+route + " | "+ statustext})
+            });
+            makelabel({text:"Partial Response (206): "+String(pt)})
+            partial_routes.forEach(froute => {
+                var route = froute.r
+                makelabel({text: "[Partial : 206] : "+route})
+            })
+        }
         return data;
     });
 }
